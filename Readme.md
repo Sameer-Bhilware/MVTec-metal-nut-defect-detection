@@ -68,14 +68,16 @@ I tested three strategies to improve the baseline mAP of 0.716:
 
 ## 💻 Development Process & AI Usage
 
-To accelerate development and ensure best practices, I utilized **DeepSeek (an AI coding assistant)** as an interactive pair-programmer and mentor throughout this project. The AI was instrumental in the following areas:
+**What I handed to the agent vs. what I decided myself:**
+I used **DeepSeek** as my primary coding agent. I handed the agent terminal error logs (e.g., resolving a corrupted 4.9GB dataset download, fixing PyTorch CUDA package conflicts) and asked it to generate boilerplate for OpenCV mask-to-bounding-box conversion. However, I made the critical engineering decisions myself. I chose the YOLOv8n architecture to meet the edge-device constraint, I decided to keep the image size at 640px to satisfy the CPU latency budget, and I dictated which augmentation experiments to run.
 
-1.  **Environment Setup & Troubleshooting:** Assisted in resolving a corrupted 4.9GB dataset extraction using Python's `tarfile` stream mode, and helped configure a clean Python `venv` with the correct CUDA 12.1 binaries for the RTX 3050 GPU.
-2.  **Hardware Optimization:** Guided the monitoring of GPU VRAM and CPU bottlenecks, leading to the use of `cache='ram'`, `amp=True`, and `rect=True` to maximize training efficiency within the 4GB VRAM limit.
-3.  **Experiment Design & Analysis:** Helped diagnose why advanced augmentations (Mixup, Copy-Paste) and higher resolutions failed on the small dataset, leading to the final successful configuration (Cosine LR + Box Penalty).
-4.  **Deployment Pipeline:** Provided the boilerplate for OpenCV mask conversion, ONNX export, and the `onnxruntime` CPU latency benchmarking script.
+**One thing the agent got wrong, and how I fixed it:**
+When my baseline model struggled to detect tiny `scratch` defects, the agent suggested switching to the larger `yolov8s` model and increasing the input resolution to 800px. I noticed this was the wrong approach because the resolution change dropped the overall mAP to 0.500, and the larger model violated the edge-device constraints. I fixed it by rejecting the agent's suggestion, reverting to `yolov8n` at 640px, and instead increasing the bounding box loss penalty (`box=10.0`) and using Cosine LR decay. This successfully pushed the mAP to 0.725 while keeping the model edge-compatible.
 
-All code was reviewed, executed, and validated locally. The AI served as a guide to help me understand the *why* behind the machine learning concepts, ensuring the final solution is fully understood and reproducible.
+**My Setup & Rules:**
+*   **Tools:** DeepSeek (web UI), VS Code, PowerShell.
+*   **Custom Instructions:** I instructed the agent: *"Always explain the mathematical reasoning behind GPU VRAM limits and provide terminal commands with exact Windows path arguments so I can run and verify the output locally before moving on."*
+*   **Bonus Script:** I created a `run_pipeline.py` script in the repository root which automates the evaluation, ONNX export, and CPU benchmark end-to-end with a single command.
 
 ---
 
