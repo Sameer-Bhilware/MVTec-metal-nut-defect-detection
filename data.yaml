@@ -1,0 +1,9 @@
+path: C:/games/InSiSo Technologies Assignment
+train: images/train
+val: images/val
+test: images/test
+names:
+  0: bent
+  1: color
+  2: flip
+  3: scratch
